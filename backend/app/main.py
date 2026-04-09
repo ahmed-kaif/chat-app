@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.api import auth, users
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
@@ -44,6 +45,11 @@ app.add_middleware(
 # --- Static files (uploads) ---
 
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR, check_dir=False), name="uploads")
+
+# --- Routers ---
+
+app.include_router(auth.router)
+app.include_router(users.router)
 
 # --- Health check ---
 
