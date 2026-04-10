@@ -417,13 +417,15 @@ body {
 .msg-avatar.hidden { visibility: hidden; }
 
 .bubble {
-  max-width: 65%;
+  max-width: 85%;
   padding: 8px 12px;
   border-radius: var(--radius-lg);
   font-size: 14px;
   line-height: 1.5;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
   position: relative;
+  width: max-content;
 }
 
 .bubble.incoming {

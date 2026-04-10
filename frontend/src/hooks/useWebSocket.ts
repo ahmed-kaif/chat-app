@@ -27,6 +27,7 @@ export function useWebSocket(roomId: string | null) {
     };
 
     ws.onmessage = (e) => {
+      console.log('[WS] Received data:', e.data);
       try {
         const { type, payload } = JSON.parse(e.data);
         switch (type) {

@@ -27,6 +27,7 @@ class ConnectionManager:
             decode_responses=True,
         )
         self._pubsub = self._redis.pubsub()
+        await self._pubsub.subscribe("securechat_events")
         self._listener_task = asyncio.create_task(self._listen())
 
     async def shutdown(self):
@@ -41,9 +42,6 @@ class ConnectionManager:
         await websocket.accept()
         if room_id not in self._connections:
             self._connections[room_id] = set()
-            # Subscribe to Redis channel for this room
-            if self._pubsub:
-                await self._pubsub.subscribe(f"room:{room_id}")
         self._connections[room_id].add((websocket, user_id))
 
     async def disconnect(self, websocket: WebSocket, room_id: str, user_id: str):
@@ -51,14 +49,12 @@ class ConnectionManager:
             self._connections[room_id].discard((websocket, user_id))
             if not self._connections[room_id]:
                 del self._connections[room_id]
-                if self._pubsub:
-                    await self._pubsub.unsubscribe(f"room:{room_id}")
 
     async def broadcast_to_room(self, room_id: str, event: dict[str, Any]):
         """Publish to Redis so ALL workers receive and forward to WS clients."""
         if self._redis:
             payload = json.dumps({"room_id": room_id, "event": event})
-            await self._redis.publish(f"room:{room_id}", payload)
+            await self._redis.publish("securechat_events", payload)
 
     async def send_personal(self, websocket: WebSocket, event: dict[str, Any]):
         """Send directly to a single WebSocket connection."""

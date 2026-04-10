@@ -46,7 +46,7 @@ export default function MessageBubble({
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '65%', alignItems: isMine ? 'flex-end' : 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0, alignItems: isMine ? 'flex-end' : 'flex-start' }}>
         {showSenderName && !isMine && (
           <span className="sender-name" style={{ paddingLeft: '4px' }}>
             {senderName}
