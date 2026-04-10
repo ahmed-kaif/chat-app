@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_]+$")
     email: EmailStr
-    password: str = Field(..., min_length=8, max_length=128)
+    password: str = Field(..., min_length=8, max_length=72)
     display_name: str | None = Field(None, max_length=100)
 
     @field_validator("password")
