@@ -31,23 +31,29 @@ async def handle_event(
     event_type: str = data.get("type", "")
     payload: dict = data.get("payload", {})
 
-    match event_type:
-        case "message.send":
-            await handle_message_send(websocket, room_id, user_id, payload, db)
-        case "message.edit":
-            await handle_message_edit(websocket, room_id, user_id, payload, db)
-        case "message.delete":
-            await handle_message_delete(websocket, room_id, user_id, payload, db)
-        case "typing.start" | "typing.stop":
-            await handle_typing(room_id, user_id, event_type)
-        case "message.read":
-            await handle_message_read(websocket, room_id, user_id, payload, db)
-        case "presence.update":
-            await handle_presence(room_id, user_id, payload)
-        case _:
-            await manager.send_personal(
-                websocket, {"type": "error", "payload": {"detail": f"Unknown event type: {event_type}"}}
-            )
+    import traceback
+    try:
+        match event_type:
+            case "message.send":
+                await handle_message_send(websocket, room_id, user_id, payload, db)
+            case "message.edit":
+                await handle_message_edit(websocket, room_id, user_id, payload, db)
+            case "message.delete":
+                await handle_message_delete(websocket, room_id, user_id, payload, db)
+            case "typing.start" | "typing.stop":
+                await handle_typing(room_id, user_id, event_type)
+            case "message.read":
+                await handle_message_read(websocket, room_id, user_id, payload, db)
+            case "presence.update":
+                await handle_presence(room_id, user_id, payload)
+            case _:
+                await manager.send_personal(
+                    websocket, {"type": "error", "payload": {"detail": f"Unknown event type: {event_type}"}}
+                )
+    except Exception as e:
+        print(f"[WS Error] Exception in handle_event: {e}", flush=True)
+        traceback.print_exc()
+        await manager.send_personal(websocket, {"type": "error", "payload": {"detail": str(e)}})
 
 
 async def handle_message_send(

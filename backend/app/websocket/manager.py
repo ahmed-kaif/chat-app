@@ -65,24 +65,28 @@ class ConnectionManager:
 
     async def _listen(self):
         """Redis pub/sub listener — forwards received messages to local WS connections."""
+        print("[Redis] Starting _listen loop", flush=True)
         if not self._pubsub:
+            print("[Redis] No pubsub!", flush=True)
             return
         async for message in self._pubsub.listen():
+            print(f"[Redis] Received raw message: {message}", flush=True)
             if message["type"] == "message":
                 try:
                     data = json.loads(message["data"])
                     room_id = data["room_id"]
                     event = data["event"]
+                    print(f"[Redis] Forwarding event {event['type']} to room {room_id}", flush=True)
                     await self._forward_to_local(room_id, event)
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"[Redis] Error parsing/forwarding: {e}", flush=True)
 
     async def _forward_to_local(self, room_id: str, event: dict[str, Any]):
         """Send event to all locally connected sockets in the room."""
-        if room_id not in self._connections:
-            return
+        conns = self._connections.get(room_id, set())
+        print(f"[WS] Forwarding locally to {len(conns)} clients in room {room_id}", flush=True)
         dead = set()
-        for ws, uid in self._connections[room_id]:
+        for ws, uid in conns:
             try:
                 await ws.send_json(event)
             except Exception:
