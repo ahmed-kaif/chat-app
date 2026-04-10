@@ -2,7 +2,7 @@ import json
 import asyncio
 from typing import Any
 
-import aioredis
+import redis.asyncio as aioredis
 from fastapi import WebSocket
 
 from app.core.config import settings
@@ -17,7 +17,7 @@ class ConnectionManager:
         # room_id -> set of (WebSocket, user_id)
         self._connections: dict[str, set[tuple[WebSocket, str]]] = {}
         self._redis: aioredis.Redis | None = None
-        self._pubsub: aioredis.client.PubSub | None = None
+        self._pubsub: Any | None = None
         self._listener_task: asyncio.Task | None = None
 
     async def startup(self):
@@ -35,7 +35,7 @@ class ConnectionManager:
         if self._pubsub:
             await self._pubsub.close()
         if self._redis:
-            await self._redis.close()
+            await self._redis.aclose()
 
     async def connect(self, websocket: WebSocket, room_id: str, user_id: str):
         await websocket.accept()
