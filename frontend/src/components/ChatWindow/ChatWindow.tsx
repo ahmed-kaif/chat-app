@@ -33,9 +33,9 @@ function getInitials(name: string): string {
 
 export default function ChatWindow({ room }: ChatWindowProps) {
   const user = useAuthStore((s) => s.user);
-  const messages = useMessageStore((s) => s.messages[room.id] || []);
-  const typingUsers = useMessageStore((s) => s.typingUsers[room.id] || []);
-  const isLoading = useMessageStore((s) => s.isLoading[room.id] ?? false);
+  const messages = useMessageStore((s) => s.messages[room.id]) || [];
+  const typingUsers = useMessageStore((s) => s.typingUsers[room.id]) || [];
+  const isLoading = useMessageStore((s) => s.isLoading[room.id]) ?? false;
   const fetchMessages = useMessageStore((s) => s.fetchMessages);
 
   const [inputText, setInputText] = useState('');
