@@ -4,10 +4,10 @@ import { useMessageStore } from '../store/messageStore';
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000';
 
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-
 export function useWebSocket(roomId: string | null) {
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shouldReconnectRef = useRef(true);
   const addMessage = useMessageStore((s) => s.addMessage);
   const updateMessage = useMessageStore((s) => s.updateMessage);
   const deleteMessage = useMessageStore((s) => s.deleteMessage);
@@ -18,6 +18,7 @@ export function useWebSocket(roomId: string | null) {
     const token = tokenStorage.getAccess();
     if (!token) return;
 
+    shouldReconnectRef.current = true;
     const url = `${WS_URL}/ws/${roomId}?token=${token}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
@@ -30,6 +31,9 @@ export function useWebSocket(roomId: string | null) {
       console.log('[WS] Received data:', e.data);
       try {
         const { type, payload } = JSON.parse(e.data);
+        if (payload?.room_id && payload.room_id !== roomId) {
+          return;
+        }
         switch (type) {
           case 'message.new':
             addMessage(roomId, {
@@ -80,16 +84,27 @@ export function useWebSocket(roomId: string | null) {
     ws.onerror = (e) => console.error('[WS] Error:', e);
 
     ws.onclose = () => {
+      if (!shouldReconnectRef.current) {
+        return;
+      }
       console.log('[WS] Disconnected, reconnecting in 3s...');
-      reconnectTimer = setTimeout(() => connect(), 3000);
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+      }
+      reconnectTimerRef.current = setTimeout(() => connect(), 3000);
     };
   }, [roomId, addMessage, updateMessage, deleteMessage, setTyping]);
 
   useEffect(() => {
     connect();
     return () => {
-      if (reconnectTimer) clearTimeout(reconnectTimer);
+      shouldReconnectRef.current = false;
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+      }
       wsRef.current?.close();
+      wsRef.current = null;
     };
   }, [connect]);
 
